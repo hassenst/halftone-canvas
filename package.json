@@ -27,6 +27,17 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest"
   },
-  "keywords": ["halftone", "canvas", "image-processing", "raster", "typescript"],
-  "license": "MIT"
+  "keywords": [
+    "halftone",
+    "canvas",
+    "image-processing",
+    "raster",
+    "typescript"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "happy-dom": "^21.0.4",
+    "vitest": "^5.1.2",
+    "vitest-canvas-mock": "^1.2.0"
+  }
 }
