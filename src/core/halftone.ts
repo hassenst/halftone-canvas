@@ -1,6 +1,11 @@
 import { analyzeImage } from "./analyzer";
 import { loadImageData } from "./image-loader";
-import { renderGrid, setupCanvas, type RenderTargetCanvas } from "./renderer";
+import {
+  renderGrid,
+  setupCanvas,
+  type HalftoneTarget,
+  type RenderTargetCanvas,
+} from "./renderer";
 import type {
   HalftoneGrid,
   HalftoneOptions,
@@ -22,6 +27,7 @@ const DEFAULT_OPTIONS: ResolvedHalftoneOptions = {
 
 export class Halftone {
   private readonly canvas: RenderTargetCanvas;
+  private readonly ownsCanvas: boolean;
   private options: ResolvedHalftoneOptions;
   private imageData: ImageData | null = null;
   private grid: HalftoneGrid | null = null;
@@ -34,9 +40,22 @@ export class Halftone {
   private animationStartTime: number = 0;
   private isDestroyed: boolean = false;
 
-  constructor(canvas: RenderTargetCanvas, options: HalftoneOptions = {}) {
-    this.canvas = canvas;
+  /**
+   * @param target Entweder ein <canvas>-Element oder ein Container-Element (z. B. <div>),
+   *               in das automatisch ein <canvas> eingefügt wird.
+   */
+  constructor(target: HalftoneTarget, options: HalftoneOptions = {}) {
+    const resolved = resolveTarget(target);
+    this.canvas = resolved.canvas;
+    this.ownsCanvas = resolved.ownsCanvas;
     this.options = resolveOptions(options);
+  }
+
+  /**
+   * Gibt das verwendete (oder automatisch im Container erzeugte) Canvas-Element zurück.
+   */
+  public getCanvas(): RenderTargetCanvas {
+    return this.canvas;
   }
 
   /**
@@ -88,14 +107,13 @@ export class Halftone {
       this.recomputeGrid();
     }
 
-    // Falls keine Animation läuft, sofort das aktualisierte statische Bild zeichnen
     if (!this.isAnimating()) {
       this.drawFrame(0);
     }
   }
 
   /**
-   * Startet die Animations-Schleife (ruft pro Frame `onBeforeDrawDot` mit aktueller Zeit auf).
+   * Startet die Animations-Schleife.
    */
   public start(): void {
     this.assertNotDestroyed();
@@ -108,7 +126,12 @@ export class Halftone {
       if (this.isDestroyed || this.animationFrameId === null) return;
 
       const elapsed = now - this.animationStartTime;
-      this.drawFrame(elapsed);
+      const allDone = this.drawFrame(elapsed);
+
+      if (allDone) {
+        this.stop();
+        return;
+      }
 
       this.animationFrameId = requestAnimationFrame(loop);
     };
@@ -126,26 +149,25 @@ export class Halftone {
     }
   }
 
-  /**
-   * Gibt zurück, ob aktuell eine Animation läuft.
-   */
   public isAnimating(): boolean {
     return this.animationFrameId !== null;
   }
 
-  /**
-   * Gibt das aktuell berechnete Raster zurück (oder null, falls noch kein Bild geladen wurde).
-   */
   public getGrid(): HalftoneGrid | null {
     return this.grid;
   }
 
   /**
-   * Bereinigt Animationen und Referenzen (wichtig für SPA-Frameworks wie React).
+   * Bereinigt Animationen, Referenzen und entfernt ein selbst erzeugtes <canvas> aus dem DOM.
    */
   public destroy(): void {
     this.stop();
     this.isDestroyed = true;
+
+    if (this.ownsCanvas && "remove" in this.canvas) {
+      this.canvas.remove();
+    }
+
     this.imageData = null;
     this.grid = null;
     this.ctx = null;
@@ -158,9 +180,9 @@ export class Halftone {
     this.ctx = setupCanvas(this.canvas, this.grid);
   }
 
-  private drawFrame(time: number): void {
-    if (!this.ctx || !this.grid) return;
-    renderGrid(this.ctx, this.grid, this.options, time);
+  private drawFrame(time: number): boolean {
+    if (!this.ctx || !this.grid) return true;
+    return renderGrid(this.ctx, this.grid, this.options, time);
   }
 
   private assertNotDestroyed(): void {
@@ -170,17 +192,42 @@ export class Halftone {
   }
 }
 
-/**
- * Komfort-Funktion für den schnellen Einzeiler-Einsatz ohne `new`.
- */
 export async function createHalftone(
-  canvas: RenderTargetCanvas,
+  target: HalftoneTarget,
   source: ImageSource,
   options?: HalftoneOptions,
 ): Promise<Halftone> {
-  const instance = new Halftone(canvas, options);
+  const instance = new Halftone(target, options);
   await instance.render(source);
   return instance;
+}
+
+/**
+ * Prüft, ob das Ziel bereits ein Canvas ist oder ein Container-Element,
+ * in dem ein neues <canvas> angelegt werden soll.
+ */
+function resolveTarget(target: HalftoneTarget): {
+  canvas: RenderTargetCanvas;
+  ownsCanvas: boolean;
+} {
+  if (
+    (typeof HTMLCanvasElement !== "undefined" &&
+      target instanceof HTMLCanvasElement) ||
+    (typeof OffscreenCanvas !== "undefined" &&
+      target instanceof OffscreenCanvas)
+  ) {
+    return { canvas: target, ownsCanvas: false };
+  }
+
+  if (typeof HTMLElement !== "undefined" && target instanceof HTMLElement) {
+    const canvas = target.ownerDocument.createElement("canvas");
+    target.appendChild(canvas);
+    return { canvas, ownsCanvas: true };
+  }
+
+  throw new TypeError(
+    "Invalid target: Expected an HTMLCanvasElement, OffscreenCanvas, or container HTMLElement.",
+  );
 }
 
 function resolveOptions(options: HalftoneOptions): ResolvedHalftoneOptions {

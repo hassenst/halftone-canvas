@@ -5,6 +5,7 @@ import type {
 } from "./types";
 
 export type RenderTargetCanvas = HTMLCanvasElement | OffscreenCanvas;
+export type HalftoneTarget = RenderTargetCanvas | HTMLElement;
 
 /**
  * Passt die physische Auflösung und CSS-Größe des Ziel-Canvas an das Raster
@@ -55,7 +56,7 @@ export function renderGrid(
     "shape" | "dotColor" | "backgroundColor" | "maxDotScale" | "onBeforeDrawDot"
   >,
   time: number = 0,
-): void {
+): boolean {
   const { cols, rows, tileSize, width, height, intensities } = grid;
   const { shape, dotColor, backgroundColor, maxDotScale, onBeforeDrawDot } =
     options;
@@ -93,7 +94,7 @@ export function renderGrid(
     }
 
     ctx.fill();
-    return;
+    return true;
   }
 
   // Animierter / Dynamischer Pfad: Hook wird für jeden Punkt aufgerufen
@@ -106,9 +107,12 @@ export function renderGrid(
     y: 0,
     radius: 0,
     color: dotColor,
+    done: undefined,
   };
 
   let currentFillColor = dotColor;
+  let allDone = true;
+
   ctx.fillStyle = currentFillColor;
   ctx.beginPath();
 
@@ -128,8 +132,13 @@ export function renderGrid(
       dotContext.y = baseY;
       dotContext.radius = intensity * maxRadius;
       dotContext.color = dotColor;
+      dotContext.done = undefined;
 
       onBeforeDrawDot(dotContext);
+
+      if (dotContext.done === false) {
+        allDone = false;
+      }
 
       if (dotContext.radius <= 0) continue;
 
@@ -153,6 +162,7 @@ export function renderGrid(
   }
 
   ctx.fill();
+  return allDone;
 }
 
 /**
