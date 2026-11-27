@@ -129,6 +129,7 @@ export function renderGrid(
   };
 
   let currentFillColor = dotColor;
+  let hasExplicitDone = false;
   let allDone = true;
 
   ctx.fillStyle = currentFillColor;
@@ -154,8 +155,11 @@ export function renderGrid(
 
       onBeforeDrawDot(dotContext);
 
-      if (dotContext.done === false) {
-        allDone = false;
+      if (dotContext.done !== undefined) {
+        hasExplicitDone = true;
+        if (!dotContext.done) {
+          allDone = false;
+        }
       }
 
       if (dotContext.radius <= 0) continue;
@@ -180,7 +184,7 @@ export function renderGrid(
   }
 
   ctx.fill();
-  return allDone;
+  return hasExplicitDone && allDone;
 }
 
 /**
