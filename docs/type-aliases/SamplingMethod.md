@@ -6,6 +6,6 @@
 type SamplingMethod = "mean" | "median";
 ```
 
-Defined in: [types.ts:17](https://github.com/hassenst/halftone-canvas/blob/dbfea575b43d47eeb00fd61032abe937e7165429/src/core/types.ts#L17)
+Defined in: [types.ts:17](https://github.com/hassenst/halftone-canvas/blob/3d958ed35903c4e61b1a0b7078c8a24631be5634/src/core/types.ts#L17)
 
 Statistical method for calculating the brightness per grid cell (tile).

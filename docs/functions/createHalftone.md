@@ -10,7 +10,7 @@ function createHalftone(
 ): Promise<Halftone>;
 ```
 
-Defined in: [halftone.ts:252](https://github.com/hassenst/halftone-canvas/blob/dbfea575b43d47eeb00fd61032abe937e7165429/src/core/halftone.ts#L252)
+Defined in: [halftone.ts:295](https://github.com/hassenst/halftone-canvas/blob/3d958ed35903c4e61b1a0b7078c8a24631be5634/src/core/halftone.ts#L295)
 
 ## Parameters
 

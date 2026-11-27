@@ -2,7 +2,7 @@
 
 # Class: Halftone
 
-Defined in: [halftone.ts:40](https://github.com/hassenst/halftone-canvas/blob/dbfea575b43d47eeb00fd61032abe937e7165429/src/core/halftone.ts#L40)
+Defined in: [halftone.ts:41](https://github.com/hassenst/halftone-canvas/blob/3d958ed35903c4e61b1a0b7078c8a24631be5634/src/core/halftone.ts#L41)
 
 Manages the lifecycle, image analysis, and rendering of a halftone effect.
 This class encapsulates the logic for loading an image, analyzing it to create a halftone grid, and rendering that grid onto a canvas.
@@ -16,7 +16,7 @@ It also provides methods to update rendering options, start and stop animations,
 new Halftone(target, options?): Halftone;
 ```
 
-Defined in: [halftone.ts:71](https://github.com/hassenst/halftone-canvas/blob/dbfea575b43d47eeb00fd61032abe937e7165429/src/core/halftone.ts#L71)
+Defined in: [halftone.ts:77](https://github.com/hassenst/halftone-canvas/blob/3d958ed35903c4e61b1a0b7078c8a24631be5634/src/core/halftone.ts#L77)
 
 Creates a new Halftone instance.
 
@@ -41,7 +41,7 @@ A new Halftone instance.
 destroy(): void;
 ```
 
-Defined in: [halftone.ts:206](https://github.com/hassenst/halftone-canvas/blob/dbfea575b43d47eeb00fd61032abe937e7165429/src/core/halftone.ts#L206)
+Defined in: [halftone.ts:248](https://github.com/hassenst/halftone-canvas/blob/3d958ed35903c4e61b1a0b7078c8a24631be5634/src/core/halftone.ts#L248)
 
 Cleans up animations, references, and removes a self-generated <canvas> from the DOM.
 This method should be called when the Halftone instance is no longer needed to free up resources.
@@ -61,7 +61,7 @@ void
 getCanvas(): RenderTargetCanvas;
 ```
 
-Defined in: [halftone.ts:82](https://github.com/hassenst/halftone-canvas/blob/dbfea575b43d47eeb00fd61032abe937e7165429/src/core/halftone.ts#L82)
+Defined in: [halftone.ts:95](https://github.com/hassenst/halftone-canvas/blob/3d958ed35903c4e61b1a0b7078c8a24631be5634/src/core/halftone.ts#L95)
 
 Returns the used (or automatically created within the container) canvas element.
 
@@ -79,7 +79,7 @@ The canvas element.
 getGrid(): HalftoneGrid | null;
 ```
 
-Defined in: [halftone.ts:196](https://github.com/hassenst/halftone-canvas/blob/dbfea575b43d47eeb00fd61032abe937e7165429/src/core/halftone.ts#L196)
+Defined in: [halftone.ts:238](https://github.com/hassenst/halftone-canvas/blob/3d958ed35903c4e61b1a0b7078c8a24631be5634/src/core/halftone.ts#L238)
 
 Gets the current halftone grid. Returns null if no image has been rendered yet.
 
@@ -97,7 +97,7 @@ HalftoneGrid or null if no image has been rendered yet.
 isAnimating(): boolean;
 ```
 
-Defined in: [halftone.ts:188](https://github.com/hassenst/halftone-canvas/blob/dbfea575b43d47eeb00fd61032abe937e7165429/src/core/halftone.ts#L188)
+Defined in: [halftone.ts:230](https://github.com/hassenst/halftone-canvas/blob/3d958ed35903c4e61b1a0b7078c8a24631be5634/src/core/halftone.ts#L230)
 
 Checks if the animation is currently running.
 
@@ -115,7 +115,7 @@ boolean indicating whether the animation is currently running.
 render(source): Promise<HalftoneGrid>;
 ```
 
-Defined in: [halftone.ts:92](https://github.com/hassenst/halftone-canvas/blob/dbfea575b43d47eeb00fd61032abe937e7165429/src/core/halftone.ts#L92)
+Defined in: [halftone.ts:134](https://github.com/hassenst/halftone-canvas/blob/3d958ed35903c4e61b1a0b7078c8a24631be5634/src/core/halftone.ts#L134)
 
 Loads an image, calculates the halftone grid, and renders it onto the canvas.
 
@@ -139,7 +139,7 @@ A promise that resolves to the resulting HalftoneGrid.
 start(): void;
 ```
 
-Defined in: [halftone.ts:149](https://github.com/hassenst/halftone-canvas/blob/dbfea575b43d47eeb00fd61032abe937e7165429/src/core/halftone.ts#L149)
+Defined in: [halftone.ts:191](https://github.com/hassenst/halftone-canvas/blob/3d958ed35903c4e61b1a0b7078c8a24631be5634/src/core/halftone.ts#L191)
 
 Starts the animation loop.
 
@@ -157,7 +157,7 @@ void
 stop(): void;
 ```
 
-Defined in: [halftone.ts:177](https://github.com/hassenst/halftone-canvas/blob/dbfea575b43d47eeb00fd61032abe937e7165429/src/core/halftone.ts#L177)
+Defined in: [halftone.ts:219](https://github.com/hassenst/halftone-canvas/blob/3d958ed35903c4e61b1a0b7078c8a24631be5634/src/core/halftone.ts#L219)
 
 Stops the running animation loop.
 
@@ -175,7 +175,7 @@ void
 updateOptions(newOptions): void;
 ```
 
-Defined in: [halftone.ts:110](https://github.com/hassenst/halftone-canvas/blob/dbfea575b43d47eeb00fd61032abe937e7165429/src/core/halftone.ts#L110)
+Defined in: [halftone.ts:152](https://github.com/hassenst/halftone-canvas/blob/3d958ed35903c4e61b1a0b7078c8a24631be5634/src/core/halftone.ts#L152)
 
 Updates the options dynamically. Recomputes the grid only if analysis parameters have changed.
 

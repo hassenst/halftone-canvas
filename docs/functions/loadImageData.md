@@ -6,7 +6,7 @@
 function loadImageData(source): Promise<ImageData>;
 ```
 
-Defined in: [image-loader.ts:9](https://github.com/hassenst/halftone-canvas/blob/dbfea575b43d47eeb00fd61032abe937e7165429/src/core/image-loader.ts#L9)
+Defined in: [image-loader.ts:9](https://github.com/hassenst/halftone-canvas/blob/3d958ed35903c4e61b1a0b7078c8a24631be5634/src/core/image-loader.ts#L9)
 
 Loads an ImageSource and extracts the raw pixel data (ImageData).
 
