@@ -215,7 +215,6 @@ function addDotToPath(
  *
  * @returns The device pixel ratio.
  */
-
 function getDevicePixelRatio(): number {
   return typeof window !== "undefined" && window.devicePixelRatio
     ? window.devicePixelRatio
