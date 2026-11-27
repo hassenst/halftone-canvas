@@ -28,6 +28,7 @@ const DEFAULT_OPTIONS: ResolvedHalftoneOptions = {
   backgroundColor: "#ffffff",
   maxDotScale: 1.0,
   invert: false,
+  responsive: true,
   onBeforeDrawDot: null,
 };
 
@@ -300,6 +301,7 @@ function resolveOptions(options: HalftoneOptions): ResolvedHalftoneOptions {
     backgroundColor: options.backgroundColor ?? DEFAULT_OPTIONS.backgroundColor,
     maxDotScale: options.maxDotScale ?? DEFAULT_OPTIONS.maxDotScale,
     invert: options.invert ?? DEFAULT_OPTIONS.invert,
+    responsive: options.responsive ?? DEFAULT_OPTIONS.responsive,
     onBeforeDrawDot: options.onBeforeDrawDot ?? DEFAULT_OPTIONS.onBeforeDrawDot,
   };
 }
