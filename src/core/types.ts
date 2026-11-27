@@ -130,4 +130,6 @@ export interface DotRenderContext {
   radius: number;
   /** Farbe dieses spezifischen Punktes (veränderbar für Farbverläufe/Highlights) */
   color: string;
+  /** Kann im Callback auf `false` gesetzt werden, solange der Punkt noch animiert */
+  done?: boolean;
 }
