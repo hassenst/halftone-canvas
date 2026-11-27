@@ -62,6 +62,11 @@ export class Halftone {
   /** Flag indicating if the instance has been destroyed. */
   private isDestroyed: boolean = false;
 
+  /** The ResizeObserver instance for observing container size changes. */
+  private resizeObserver: ResizeObserver | null = null;
+  /** The container element into which the canvas is inserted. */
+  private containerElement: HTMLElement | null = null;
+
   /**
    * Creates a new Halftone instance.
    *
@@ -74,6 +79,13 @@ export class Halftone {
     this.canvas = resolved.canvas;
     this.ownsCanvas = resolved.ownsCanvas;
     this.options = resolveOptions(options);
+    this.containerElement =
+      typeof HTMLElement !== "undefined" && target instanceof HTMLElement
+        ? target
+        : null;
+    if (this.options.responsive) {
+      this.initResizeObserver();
+    }
   }
 
   /**
@@ -82,6 +94,35 @@ export class Halftone {
    */
   public getCanvas(): RenderTargetCanvas {
     return this.canvas;
+  }
+
+  /**
+   * Initializes a ResizeObserver to monitor changes in the container's size.
+   * When the container is resized, the halftone grid is recomputed and redrawn.
+   * This method is called automatically if the `responsive` option is set to true.
+   * @returns void
+   */
+
+  private initResizeObserver(): void {
+    if (!this.containerElement || typeof ResizeObserver === "undefined") return;
+
+    let rafPending = false;
+    this.resizeObserver = new ResizeObserver(() => {
+      if (rafPending || this.isDestroyed || !this.imageData) return;
+      rafPending = true;
+
+      // Debounce über requestAnimationFrame, damit bei Fenster-Resize kein Ruckeln entsteht
+      requestAnimationFrame(() => {
+        rafPending = false;
+        if (this.isDestroyed || !this.imageData) return;
+        this.recomputeGrid();
+        if (!this.isAnimating()) {
+          this.drawFrame(0);
+        }
+      });
+    });
+
+    this.resizeObserver.observe(this.containerElement);
   }
 
   /**
@@ -215,6 +256,7 @@ export class Halftone {
     this.imageData = null;
     this.grid = null;
     this.ctx = null;
+    this.resizeObserver?.disconnect();
   }
 
   /**
@@ -225,7 +267,7 @@ export class Halftone {
     if (!this.imageData) return;
 
     this.grid = analyzeImage(this.imageData, this.options);
-    this.ctx = setupCanvas(this.canvas, this.grid);
+    this.ctx = setupCanvas(this.canvas, this.grid).ctx;
   }
 
   /**
