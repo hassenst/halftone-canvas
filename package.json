@@ -6,7 +6,9 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
-  "workspaces": ["playground"],
+  "workspaces": [
+    "playground"
+  ],
   "exports": {
     ".": {
       "import": {
@@ -26,7 +28,8 @@
     "build": "tsdown",
     "dev": "tsdown --watch",
     "typecheck": "tsc --noEmit",
-    "test": "vitest"
+    "test": "vitest",
+    "docs": "typedoc"
   },
   "keywords": [
     "halftone",
@@ -39,6 +42,8 @@
   "devDependencies": {
     "happy-dom": "^21.0.4",
     "tsdown": "^0.23.7",
+    "typedoc": "^0.28.20",
+    "typedoc-plugin-markdown": "^4.14.1",
     "vitest": "^5.1.2",
     "vitest-canvas-mock": "^1.2.0"
   }
