@@ -64,6 +64,11 @@ export interface HalftoneOptions {
   invert?: boolean;
 
   /**
+   * Makes the halftone canvas responsive to window size changes (Default: true).
+   */
+  responsive?: boolean;
+
+  /**
    * Optional modifier callback called before drawing each individual dot.
    * Allows for animations (e.g., waves, mouse interaction, pulsing) without needing to re-analyze the image.
    */
@@ -82,6 +87,7 @@ export interface ResolvedHalftoneOptions {
   backgroundColor: string;
   maxDotScale: number;
   invert: boolean;
+  responsive: boolean;
   onBeforeDrawDot: ((context: DotRenderContext) => void) | null;
 }
 
