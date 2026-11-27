@@ -21,24 +21,33 @@ export type HalftoneTarget = RenderTargetCanvas | HTMLElement;
  * @param canvas - The target HTMLCanvasElement or OffscreenCanvas.
  * @param grid - The halftone grid information.
  * @param dpr - The device pixel ratio (defaults to getDevicePixelRatio()).
- * @returns The 2D canvas context.
+ * @param displayWidth - optional width in pixels for the canvas; if not provided, the grid's width is used.
+ * @returns Object containing the 2D canvas context and the scale factor.
  */
 export function setupCanvas(
   canvas: RenderTargetCanvas,
   grid: HalftoneGrid,
   dpr: number = getDevicePixelRatio(),
-): CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D {
-  const targetWidth = Math.round(grid.width * dpr);
-  const targetHeight = Math.round(grid.height * dpr);
+  displayWidth?: number,
+): {
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
+  scale: number;
+} {
+  const effectiveWidth = displayWidth ?? grid.width;
+  const scale = effectiveWidth / grid.width;
+  const effectiveHeight = grid.height * scale;
+
+  const targetWidth = Math.round(effectiveWidth * dpr);
+  const targetHeight = Math.round(effectiveHeight * dpr);
 
   if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
     canvas.width = targetWidth;
     canvas.height = targetHeight;
 
-    // Set CSS size only for actual DOM Canvas elements
     if ("style" in canvas) {
-      canvas.style.width = `${grid.width}px`;
-      canvas.style.height = `${grid.height}px`;
+      canvas.style.width = `${effectiveWidth}px`;
+      canvas.style.height = `${effectiveHeight}px`;
+      canvas.style.display = "block";
     }
   }
 
@@ -51,10 +60,9 @@ export function setupCanvas(
     throw new Error("Could not initialize 2D context on target canvas.");
   }
 
-  // Reset transformation and apply DPR scaling
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
 
-  return ctx;
+  return { ctx, scale };
 }
 
 /**
