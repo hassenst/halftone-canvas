@@ -1,7 +1,10 @@
 import type { ImageSource } from "./types";
 
 /**
- * Lädt eine beliebige ImageSource und extrahiert die rohen Pixeldaten (ImageData).
+ * Loads an ImageSource and extracts the raw pixel data (ImageData).
+ *
+ * @param source - The image source as a URL, HTMLImageElement, or ImageBitmap.
+ * @returns A promise that resolves to the ImageData of the loaded image.
  */
 export async function loadImageData(source: ImageSource): Promise<ImageData> {
   const drawable = await resolveDrawable(source);
@@ -15,7 +18,10 @@ export async function loadImageData(source: ImageSource): Promise<ImageData> {
 }
 
 /**
- * Normalisiert die Eingabequelle in ein zeichenbares Objekt (HTMLImageElement oder ImageBitmap).
+ * Normalizes the input source into a drawable object (HTMLImageElement or ImageBitmap).
+ *
+ * @param source - The image source to resolve.
+ * @returns A promise that resolves to the drawable HTMLImageElement or ImageBitmap.
  */
 async function resolveDrawable(
   source: ImageSource,
@@ -25,7 +31,7 @@ async function resolveDrawable(
   }
 
   if (source instanceof HTMLImageElement) {
-    // Falls das <img>-Element im DOM noch nicht fertig geladen ist, warten wir darauf
+    // If the <img> element in the DOM is not yet fully loaded, wait for it.
     if (!source.complete) {
       await source.decode();
     }
@@ -47,13 +53,16 @@ async function resolveDrawable(
 }
 
 /**
- * Lädt ein Bild asynchron über eine URL (inkl. CORS-Header für getImageData).
+ * Loads an image asynchronously from a URL (including CORS headers for getImageData).
+ *
+ * @param url - The source URL of the image.
+ * @returns A promise that resolves to an HTMLImageElement.
  */
 function loadImageFromUrl(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
 
-    // Ermöglicht getImageData() für Bilder von fremden Domains (sofern der Server CORS erlaubt).
+    // Enables getImageData() for images from different domains (provided the server allows CORS).
     if (!url.startsWith("data:")) {
       img.crossOrigin = "anonymous";
     }
@@ -66,7 +75,10 @@ function loadImageFromUrl(url: string): Promise<HTMLImageElement> {
 }
 
 /**
- * Liest die intrinsische Breite und Höhe unabhängig vom Element-Typ aus.
+ * Reads the intrinsic width and height regardless of the element type.
+ *
+ * @param drawable - The HTMLImageElement or ImageBitmap to measure.
+ * @returns An object containing the width and height of the image.
  */
 function getDimensions(drawable: HTMLImageElement | ImageBitmap): {
   width: number;
@@ -85,15 +97,20 @@ function getDimensions(drawable: HTMLImageElement | ImageBitmap): {
 }
 
 /**
- * Zeichnet das Bild auf ein unsichtbares Canvas und gibt die ImageData zurück.
+ * Draws the image onto an invisible canvas and returns the ImageData.
+ *
+ * @param drawable - The HTMLImageElement or ImageBitmap to draw.
+ * @param width - The image width.
+ * @param height - The image height.
+ * @returns The ImageData from the canvas.
  */
 function extractImageData(
   drawable: HTMLImageElement | ImageBitmap,
   width: number,
   height: number,
 ): ImageData {
-  // Nutzt OffscreenCanvas falls verfügbar (funktioniert auch in Web Workern),
-  // sonst klassisches DOM-Canvas als Fallback.
+  // Uses OffscreenCanvas if available (works also in Web Workers),
+  // otherwise uses a standard DOM canvas as a fallback.
   const canvas =
     typeof OffscreenCanvas !== "undefined"
       ? new OffscreenCanvas(width, height)

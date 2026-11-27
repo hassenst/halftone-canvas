@@ -1,32 +1,39 @@
-import type { HalftoneGrid, ResolvedHalftoneOptions } from './types';
+import type { HalftoneGrid, ResolvedHalftoneOptions } from "./types";
 
 /**
- * Analysiert ImageData und berechnet die normalisierten Intensitätswerte
- * (0.0 = weiß / kein Punkt, 1.0 = schwarz / maximaler Punkt) pro Raster-Tile.
+ * Analyzes ImageData and calculates the normalized intensity values
+ * (0.0 = white / no dot, 1.0 = black / max dot) per grid tile.
+ *
+ * @param imageData - The raw image data to analyze.
+ * @param options - Configuration options for the grid generation.
+ * @returns A HalftoneGrid containing calculated intensities and dimensions.
  */
 export function analyzeImage(
   imageData: ImageData,
-  options: Pick<ResolvedHalftoneOptions, 'tileSize' | 'columns' | 'sampling' | 'invert'>,
+  options: Pick<
+    ResolvedHalftoneOptions,
+    "tileSize" | "columns" | "sampling" | "invert"
+  >,
 ): HalftoneGrid {
   const { width, height, data } = imageData;
 
-  // 1. Tile-Größe und Raster-Dimensionen bestimmen
+  // 1. Determine tile size and grid dimensions
   const tileSize = resolveTileSize(width, options);
   const cols = Math.max(1, Math.floor(width / tileSize));
   const rows = Math.max(1, Math.floor(height / tileSize));
 
-  // Exakte Rastermaße (falls Bildbreite kein exaktes Vielfaches von tileSize ist)
+  // Exact grid dimensions (if image width is not an exact multiple of tileSize)
   const gridWidth = cols * tileSize;
   const gridHeight = rows * tileSize;
 
   const intensities = new Float32Array(cols * rows);
 
-  // Wiederverwendbarer Puffer für den Median (vermeidet tausende Array-Allokationen)
+  // Reusable buffer for the median (prevents thousands of array allocations)
   const maxPixelsPerTile = Math.ceil(tileSize) * Math.ceil(tileSize);
   const medianBuffer =
-    options.sampling === 'median' ? new Float32Array(maxPixelsPerTile) : null;
+    options.sampling === "median" ? new Float32Array(maxPixelsPerTile) : null;
 
-  // 2. Über alle Rasterzellen iterieren
+  // 2. Iterate over all grid cells
   for (let row = 0; row < rows; row++) {
     const startY = Math.floor(row * tileSize);
     const endY = Math.min(Math.floor((row + 1) * tileSize), height);
@@ -35,13 +42,21 @@ export function analyzeImage(
       const startX = Math.floor(col * tileSize);
       const endX = Math.min(Math.floor((col + 1) * tileSize), width);
 
-      // Helligkeit (0.0 = schwarz, 1.0 = weiß) berechnen
+      // Calculate brightness (0.0 = black, 1.0 = white)
       const brightness =
         medianBuffer !== null
-          ? computeTileMedian(data, width, startX, startY, endX, endY, medianBuffer)
+          ? computeTileMedian(
+              data,
+              width,
+              startX,
+              startY,
+              endX,
+              endY,
+              medianBuffer,
+            )
           : computeTileMean(data, width, startX, startY, endX, endY);
 
-      // Intensität umkehren: 0.0 = weiß (kein Punkt), 1.0 = schwarz (voller Punkt)
+      // Invert intensity: 0.0 = white (no dot), 1.0 = black (full dot)
       const intensity = options.invert ? brightness : 1 - brightness;
 
       intensities[row * cols + col] = clampZeroOne(intensity);
@@ -59,11 +74,15 @@ export function analyzeImage(
 }
 
 /**
- * Berechnet die effektive Tile-Größe basierend auf `columns` oder `tileSize`.
+ * Calculates the effective tile size based on `columns` or `tileSize`.
+ *
+ * @param imageWidth - The width of the source image.
+ * @param options - Configuration options for tile size calculation.
+ * @returns The calculated tile size.
  */
 function resolveTileSize(
   imageWidth: number,
-  options: Pick<ResolvedHalftoneOptions, 'tileSize' | 'columns'>,
+  options: Pick<ResolvedHalftoneOptions, "tileSize" | "columns">,
 ): number {
   if (options.columns !== null && options.columns > 0) {
     return imageWidth / options.columns;
@@ -72,8 +91,12 @@ function resolveTileSize(
 }
 
 /**
- * Berechnet die wahrgenommene Helligkeit (Luminanz) eines einzelnen Pixels (0.0 bis 1.0).
- * Berücksichtigt Alpha-Transparenz (transparent wird als Weiß behandelt).
+ * Calculates the perceived brightness (Luminance) of a single pixel (0.0 to 1.0).
+ * Takes alpha transparency into account (transparent is treated as white).
+ *
+ * @param data - The raw RGBA pixel data.
+ * @param offset - The starting index of the pixel in the data array.
+ * @returns The calculated luminance value.
  */
 function getPixelBrightness(data: Uint8ClampedArray, offset: number): number {
   const r = data[offset];
@@ -81,15 +104,23 @@ function getPixelBrightness(data: Uint8ClampedArray, offset: number): number {
   const b = data[offset + 2];
   const a = data[offset + 3] / 255;
 
-  // Rec. 601 Luminanz-Formel (normalisiert auf 0..1)
+  // Rec. 601 Luminance formula (normalized to 0..1)
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 
-  // Alpha-Blending gegen weißen Hintergrund (1.0)
+  // Alpha blending against white background (1.0)
   return luminance * a + (1 - a);
 }
 
 /**
- * Berechnet den arithmetischen Mittelwert der Helligkeit innerhalb eines Tiles.
+ * Calculates the arithmetic mean of the brightness within a tile.
+ *
+ * @param data - The raw RGBA pixel data.
+ * @param imageWidth - The width of the source image.
+ * @param startX - The starting X-coordinate of the tile.
+ * @param startY - The starting Y-coordinate of the tile.
+ * @param endX - The ending X-coordinate of the tile.
+ * @param endY - The ending Y-coordinate of the tile.
+ * @returns The mean brightness value.
  */
 function computeTileMean(
   data: Uint8ClampedArray,
@@ -115,8 +146,17 @@ function computeTileMean(
 }
 
 /**
- * Berechnet den Median der Helligkeit innerhalb eines Tiles.
- * Erhält harte Kanten und Linien besser als der Mittelwert.
+ * Calculates the median brightness within a tile.
+ * Provides better edge and line definition than the mean value.
+ *
+ * @param data - The raw RGBA pixel data.
+ * @param imageWidth - The width of the source image.
+ * @param startX - The starting X-coordinate of the tile.
+ * @param startY - The starting Y-coordinate of the tile.
+ * @param endX - The ending X-coordinate of the tile.
+ * @param endY - The ending Y-coordinate of the tile.
+ * @param buffer - A pre-allocated array to store pixel values for sorting.
+ * @returns The median brightness value.
  */
 function computeTileMedian(
   data: Uint8ClampedArray,
@@ -142,7 +182,7 @@ function computeTileMedian(
 
   if (count === 0) return 1;
 
-  // Nur den befüllten Teil des Puffers sortieren
+  // Sort only the populated part of the buffer
   const slice = buffer.subarray(0, count);
   slice.sort();
 
@@ -153,6 +193,12 @@ function computeTileMedian(
   return slice[mid];
 }
 
+/**
+ * Clamps a numerical value to stay within the 0 to 1 range.
+ *
+ * @param value - The numeric value to clamp.
+ * @returns The clamped value (minimum 0, maximum 1).
+ */
 function clampZeroOne(value: number): number {
   return value < 0 ? 0 : value > 1 ? 1 : value;
 }

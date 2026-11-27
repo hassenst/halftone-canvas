@@ -13,6 +13,12 @@ import type {
   ResolvedHalftoneOptions,
 } from "./types";
 
+/**
+ * The default configuration options for the Halftone class.
+ * These values are used when the user does not provide specific options.
+ * They can be overridden by passing a HalftoneOptions object to the constructor or updateOptions method.
+ * @internal
+ */
 const DEFAULT_OPTIONS: ResolvedHalftoneOptions = {
   tileSize: 10,
   columns: null,
@@ -25,24 +31,42 @@ const DEFAULT_OPTIONS: ResolvedHalftoneOptions = {
   onBeforeDrawDot: null,
 };
 
+/**
+ * Manages the lifecycle, image analysis, and rendering of a halftone effect.
+ * This class encapsulates the logic for loading an image, analyzing it to create a halftone grid, and rendering that grid onto a canvas.
+ * It also provides methods to update rendering options, start and stop animations, and clean up resources.
+ * @public
+ */
 export class Halftone {
+  /** The target canvas element used for rendering. */
   private readonly canvas: RenderTargetCanvas;
+  /** Indicates whether this class owns the canvas element. */
   private readonly ownsCanvas: boolean;
+  /** The resolved configuration options. */
   private options: ResolvedHalftoneOptions;
+  /** The raw image data. */
   private imageData: ImageData | null = null;
+  /** The calculated halftone grid. */
   private grid: HalftoneGrid | null = null;
+  /** The 2D rendering context. */
   private ctx:
     | CanvasRenderingContext2D
     | OffscreenCanvasRenderingContext2D
     | null = null;
 
+  /** The ID of the current animation frame request. */
   private animationFrameId: number | null = null;
+  /** The timestamp when the animation started. */
   private animationStartTime: number = 0;
+  /** Flag indicating if the instance has been destroyed. */
   private isDestroyed: boolean = false;
 
   /**
-   * @param target Entweder ein <canvas>-Element oder ein Container-Element (z. B. <div>),
-   *               in das automatisch ein <canvas> eingefügt wird.
+   * Creates a new Halftone instance.
+   *
+   * @param target - Either an <canvas> element or a container element (e.g., <div>) into which a <canvas> will be automatically inserted.
+   * @param options - Configuration options for the halftone effect.
+   * @returns A new Halftone instance.
    */
   constructor(target: HalftoneTarget, options: HalftoneOptions = {}) {
     const resolved = resolveTarget(target);
@@ -52,14 +76,18 @@ export class Halftone {
   }
 
   /**
-   * Gibt das verwendete (oder automatisch im Container erzeugte) Canvas-Element zurück.
+   * Returns the used (or automatically created within the container) canvas element.
+   * @returns The canvas element.
    */
   public getCanvas(): RenderTargetCanvas {
     return this.canvas;
   }
 
   /**
-   * Lädt ein Bild, berechnet das Halbton-Raster und zeichnet es auf das Canvas.
+   * Loads an image, calculates the halftone grid, and renders it onto the canvas.
+   *
+   * @param source - The image source to load.
+   * @returns A promise that resolves to the resulting HalftoneGrid.
    */
   public async render(source: ImageSource): Promise<HalftoneGrid> {
     this.assertNotDestroyed();
@@ -74,8 +102,10 @@ export class Halftone {
   }
 
   /**
-   * Aktualisiert Optionen nachträglich.
-   * Berechnet das Raster nur neu, wenn sich Analyse-Parameter geändert haben.
+   * Updates the options dynamically. Recomputes the grid only if analysis parameters have changed.
+   *
+   * @param newOptions - The partial set of options to update.
+   * @returns void
    */
   public updateOptions(newOptions: Partial<HalftoneOptions>): void {
     this.assertNotDestroyed();
@@ -113,7 +143,8 @@ export class Halftone {
   }
 
   /**
-   * Startet die Animations-Schleife.
+   * Starts the animation loop.
+   * @returns void
    */
   public start(): void {
     this.assertNotDestroyed();
@@ -140,7 +171,8 @@ export class Halftone {
   }
 
   /**
-   * Stoppt die laufende Animations-Schleife.
+   * Stops the running animation loop.
+   * @returns void
    */
   public stop(): void {
     if (this.animationFrameId !== null) {
@@ -149,16 +181,27 @@ export class Halftone {
     }
   }
 
+  /**
+   * Checks if the animation is currently running.
+   * @returns boolean indicating whether the animation is currently running.
+   */
   public isAnimating(): boolean {
     return this.animationFrameId !== null;
   }
 
+  /**
+   * Gets the current halftone grid. Returns null if no image has been rendered yet.
+   * @returns HalftoneGrid or null if no image has been rendered yet.
+   */
   public getGrid(): HalftoneGrid | null {
     return this.grid;
   }
 
   /**
-   * Bereinigt Animationen, Referenzen und entfernt ein selbst erzeugtes <canvas> aus dem DOM.
+   * Cleans up animations, references, and removes a self-generated <canvas> from the DOM.
+   * This method should be called when the Halftone instance is no longer needed to free up resources.
+   * After calling this method, the Halftone instance should not be used again.
+   * @returns void
    */
   public destroy(): void {
     this.stop();
@@ -173,6 +216,10 @@ export class Halftone {
     this.ctx = null;
   }
 
+  /**
+   * Recomputes the halftone grid based on the current image data and options.
+   * @returns void
+   */
   private recomputeGrid(): void {
     if (!this.imageData) return;
 
@@ -180,11 +227,21 @@ export class Halftone {
     this.ctx = setupCanvas(this.canvas, this.grid);
   }
 
+  /**
+   * Draws a single frame of the animation.
+   * @param time
+   * @returns boolean
+   */
   private drawFrame(time: number): boolean {
     if (!this.ctx || !this.grid) return true;
     return renderGrid(this.ctx, this.grid, this.options, time);
   }
 
+  /**
+   * Asserts that the Halftone instance has not been destroyed.
+   * @returns void
+   * @throws {Error} If the Halftone instance has already been destroyed.
+   */
   private assertNotDestroyed(): void {
     if (this.isDestroyed) {
       throw new Error("Halftone instance has already been destroyed.");
@@ -203,8 +260,11 @@ export async function createHalftone(
 }
 
 /**
- * Prüft, ob das Ziel bereits ein Canvas ist oder ein Container-Element,
- * in dem ein neues <canvas> angelegt werden soll.
+ * Checks if the target is already a canvas or a container element where a new <canvas> should be created.
+ *
+ * @param target - The target element to resolve.
+ * @returns An object containing the canvas and a flag indicating if ownership is held.
+ * @throws {TypeError} If the target is not a valid HTMLCanvasElement, OffscreenCanvas, or HTMLElement.
  */
 function resolveTarget(target: HalftoneTarget): {
   canvas: RenderTargetCanvas;

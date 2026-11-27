@@ -1,78 +1,77 @@
 /**
- * Unterstützte Eingabequellen für das Bild.
- * - string: Bild-URL oder Data-URL
- * - HTMLImageElement: Referenz auf ein bestehendes <img>-Element im DOM
- * - ImageBitmap: Bereits im Speicher dekodiertes Bild (ideal für Performance)
+ * Supported input sources for the image.
+ * - string: Image URL or Data URL
+ * - HTMLImageElement: Reference to an existing <img> element in the DOM
+ * - ImageBitmap: Image already decoded in memory (ideal for performance)
  */
 export type ImageSource = string | HTMLImageElement | ImageBitmap;
 
 /**
- * Form der einzelnen Raster-Elemente.
+ * Shape of the individual grid dots.
  */
 export type DotShape = "circle" | "square";
 
 /**
- * Statistische Methode zur Berechnung der Helligkeit pro Rasterzelle (Tile).
+ * Statistical method for calculating the brightness per grid cell (tile).
  */
 export type SamplingMethod = "mean" | "median";
 
 /**
- * Konfigurationsoptionen für den Halbton-Rasterizer.
+ * Configuration options for the halftone rasterizer.
  */
 export interface HalftoneOptions {
   /**
-   * Größe eines einzelnen Raster-Quadrats in Pixeln (Standard: 10).
-   * Wird ignoriert, falls `columns` angegeben ist.
+   * Size of a single grid square in pixels (Default: 10).
+   * Ignored if `columns` is specified.
    */
   tileSize?: number;
 
   /**
-   * Alternative zu `tileSize`: Legt eine feste Spaltenanzahl fest.
-   * Die `tileSize` wird dann dynamisch aus der Bildbreite berechnet.
+   * Alternative to `tileSize`: Sets a fixed number of columns.
+   * The `tileSize` is then dynamically calculated based on the image width.
    */
   columns?: number;
 
   /**
-   * Form der gerenderten Punkte (Standard: 'circle').
+   * Shape of the rendered dots (Default: 'circle').
    */
   shape?: DotShape;
 
   /**
-   * Berechnungsmethode für die Tile-Intensität (Standard: 'mean').
+   * Method for calculating the tile intensity (Default: 'mean').
    */
   sampling?: SamplingMethod;
 
   /**
-   * Farbe der Punkte als CSS-Farbwert (Standard: '#000000').
+   * Color of the dots as a CSS color value (Default: '#000000').
    */
   dotColor?: string;
 
   /**
-   * Hintergrundfarbe des Canvas oder 'transparent' (Standard: '#ffffff').
+   * Background color of the canvas or 'transparent' (Default: '#ffffff').
    */
   backgroundColor?: string;
 
   /**
-   * Skalierungsfaktor für die maximale Punktgröße (Standard: 1.0).
-   * Werte > 1.0 (z. B. 1.41 bei Kreisen) lassen dunkle Bereiche komplett verschmelzen.
+   * Scaling factor for the maximum dot size (Default: 1.0).
+   * Values > 1.0 (e.g., 1.41 for circles) cause dark areas to merge completely.
    */
   maxDotScale?: number;
 
   /**
-   * Kehrt die Helligkeitswerte um (Weiß = großer Punkt, Schwarz = kein Punkt) (Standard: false).
+   * Inverts the brightness values (White = large dot, Black = no dot) (Default: false).
    */
   invert?: boolean;
 
   /**
-   * Optionaler Modifier-Callback, der vor dem Zeichnen jedes einzelnen Punktes aufgerufen wird.
-   * Ermöglicht Animationen (z. B. Wellen, Maus-Interaktion, Pulsieren),
-   * ohne das Bild neu analysieren zu müssen.
+   * Optional modifier callback called before drawing each individual dot.
+   * Allows for animations (e.g., waves, mouse interaction, pulsing) without needing to re-analyze the image.
    */
   onBeforeDrawDot?: (context: DotRenderContext) => void;
 }
 
 /**
- * Interne, vollständig aufgelöste Konfiguration ohne optionale Felder.
+ * Internal, fully resolved configuration without optional fields.
  */
 export interface ResolvedHalftoneOptions {
   tileSize: number;
@@ -87,49 +86,49 @@ export interface ResolvedHalftoneOptions {
 }
 
 /**
- * Ergebnis der Bildanalyse (Phase 2).
- * Enthält ausschließlich reine Daten, unabhängig vom Rendering.
+ * Result of the image analysis (Phase 2).
+ * Contains only pure data, independent of rendering.
  */
 export interface HalftoneGrid {
-  /** Anzahl der Spalten im Raster */
+  /** Number of columns in the grid. */
   readonly cols: number;
-  /** Anzahl der Zeilen im Raster */
+  /** Number of rows in the grid. */
   readonly rows: number;
-  /** Berechnete Breite/Höhe eines Tiles in Pixeln */
+  /** Calculated width/height of a tile in pixels. */
   readonly tileSize: number;
-  /** Gesamtbreite des Rasters in Pixeln */
+  /** Total width of the grid in pixels. */
   readonly width: number;
-  /** Gesamthöhe des Rasters in Pixeln */
+  /** Total height of the grid in pixels. */
   readonly height: number;
   /**
-   * Flaches Array der Länge `cols * rows`.
-   * Jeder Wert liegt zwischen 0.0 (reines Weiß -> kein Punkt)
-   * und 1.0 (reines Schwarz -> maximaler Punkt).
+   * Flat array of length `cols * rows`.
+   * Each value ranges between 0.0 (pure white -> no dot)
+   * and 1.0 (pure black -> maximum dot).
    */
   readonly intensities: Float32Array;
 }
 
 /**
- * Veränderbarer Zustand eines einzelnen Punktes während des Render-Vorgangs.
- * Wird an `onBeforeDrawDot` übergeben, um Animationen zu steuern.
+ * Mutable state of a single dot during the rendering process.
+ * Passed to `onBeforeDrawDot` for animation control.
  */
 export interface DotRenderContext {
-  /** Spalten-Index (0-basiert) */
+  /** Column index (0-indexed). */
   readonly col: number;
-  /** Zeilen-Index (0-basiert) */
+  /** Row index (0-indexed). */
   readonly row: number;
-  /** Basis-Intensität aus dem Bild (0.0 bis 1.0) */
+  /** Base intensity from the image (0.0 to 1.0). */
   readonly intensity: number;
-  /** Verstrichene Zeit in Millisekunden (für Animationen) */
+  /** Elapsed time in milliseconds (for animations). */
   readonly time: number;
-  /** X-Mittelpunkt des Punktes auf dem Canvas (veränderbar für Position-Offsets) */
+  /** X-coordinate of the dot's center on the canvas (changeable for position offsets). */
   x: number;
-  /** Y-Mittelpunkt des Punktes auf dem Canvas (veränderbar für Position-Offsets) */
+  /** Y-coordinate of the dot's center on the canvas (changeable for position offsets). */
   y: number;
-  /** Berechneter Radius bzw. halbe Seitenlänge (veränderbar für Größen-Animationen) */
+  /** Calculated radius or half-side length (changeable for size animations). */
   radius: number;
-  /** Farbe dieses spezifischen Punktes (veränderbar für Farbverläufe/Highlights) */
+  /** Color of this specific dot (changeable for gradients/highlights). */
   color: string;
-  /** Kann im Callback auf `false` gesetzt werden, solange der Punkt noch animiert */
+  /** Can be set to `false` in the callback as long as the dot is still animating. */
   done?: boolean;
 }
